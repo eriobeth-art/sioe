@@ -1,0 +1,37 @@
+SIOE EPOANT · CONTENEDOR PARA GITHUB PAGES
+
+Dominio:
+https://sioe.edupsic.com
+
+Apps Script:
+https://script.google.com/macros/s/AKfycbwyejYjRrIqUviy0T1jRI7BWxBiQM_cYxGPqKJYGSrQgR2AXqmYun9fuOiZzEl7f04/exec
+
+ARCHIVOS
+- index.html       Contenedor de pantalla completa.
+- 404.html         Redirige rutas desconocidas a la portada.
+- CNAME            Define el dominio personalizado.
+- .nojekyll        Evita procesamiento innecesario de Jekyll.
+
+SUBIDA A GITHUB
+1. Crea o abre el repositorio destinado a SIOE.
+2. Borra archivos anteriores del repositorio si ese repositorio será exclusivo de SIOE.
+3. Sube index.html, 404.html, CNAME y .nojekyll a la raíz del repositorio.
+4. Ve a Settings > Pages.
+5. Source: Deploy from a branch.
+6. Branch: main / (root).
+7. Guarda.
+8. En Custom domain debe aparecer: sioe.edupsic.com
+9. Activa Enforce HTTPS cuando GitHub indique que el certificado está disponible.
+
+DNS
+En Squarespace, el subdominio debe apuntar al host de GitHub Pages correspondiente
+a tu usuario u organización mediante CNAME. Si ya está funcionando, no modifiques
+otros registros DNS.
+
+NOTAS TÉCNICAS
+- La barra de direcciones permanecerá en https://sioe.edupsic.com
+- Apps Script se carga dentro de un iframe de pantalla completa.
+- No se añadió atributo sandbox al iframe para no romper login, PDFs, impresión,
+  ventanas emergentes o navegación requerida por SIOE.
+- El proyecto Apps Script debe conservar XFrameOptionsMode.ALLOWALL.
+- Este contenedor no sustituye las validaciones de sesión y rol del backend.
