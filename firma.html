@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>Firma de reporte académico · SIOE EPOANT</title>
+
+  <style>
+    html,
+    body{
+      width:100%;
+      height:100%;
+      margin:0;
+      padding:0;
+      overflow:hidden;
+      background:#eef3f7;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+
+    #sioeFirmaFrame{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      border:0;
+      display:none;
+      background:#eef3f7;
+    }
+
+    #estado{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      background:#eef3f7;
+      color:#173f62;
+    }
+
+    .card{
+      width:min(480px,100%);
+      background:#fff;
+      border:1px solid #d8e3ea;
+      border-radius:18px;
+      box-shadow:0 14px 38px rgba(20,50,70,.12);
+      padding:28px;
+      text-align:center;
+    }
+
+    .marca{
+      width:58px;
+      height:58px;
+      margin:0 auto 14px;
+      border-radius:14px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#155594;
+      color:#fff;
+      font-size:27px;
+      font-weight:900;
+    }
+
+    h1{
+      margin:0;
+      font-size:23px;
+    }
+
+    p{
+      margin:10px 0 0;
+      color:#637684;
+      line-height:1.45;
+      font-size:14px;
+    }
+
+    .error{
+      color:#9f2929;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="estado">
+    <div class="card">
+      <div class="marca">S</div>
+
+      <h1 id="estadoTitulo">
+        Abriendo reporte académico
+      </h1>
+
+      <p id="estadoTexto">
+        Espere un momento…
+      </p>
+    </div>
+  </div>
+
+  <iframe
+    id="sioeFirmaFrame"
+    title="Firma de reporte académico"
+    allow="clipboard-write"
+    referrerpolicy="no-referrer"
+  ></iframe>
+
+  <script>
+    (function iniciarFirmaSioe() {
+      'use strict';
+
+      const params =
+        new URLSearchParams(
+          window.location.search || ''
+        );
+
+      const token =
+        String(
+          params.get('token') || ''
+        ).trim();
+
+      const estado =
+        document.getElementById(
+          'estado'
+        );
+
+      const titulo =
+        document.getElementById(
+          'estadoTitulo'
+        );
+
+      const texto =
+        document.getElementById(
+          'estadoTexto'
+        );
+
+      const frame =
+        document.getElementById(
+          'sioeFirmaFrame'
+        );
+
+      if (
+        !token ||
+        token.length < 40
+      ) {
+        titulo.textContent =
+          'Enlace no válido';
+
+        texto.textContent =
+          'La solicitud de firma no contiene un token válido.';
+
+        texto.className =
+          'error';
+
+        return;
+      }
+
+
+      function normalizarExec(url) {
+        const valor =
+          String(
+            url || ''
+          )
+          .trim();
+
+        const match =
+          valor.match(
+            /https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec/i
+          );
+
+        return match
+          ? match[0]
+          : '';
+      }
+
+
+      async function descubrirDesdeArchivo(ruta) {
+        try {
+          const respuesta =
+            await fetch(
+              ruta,
+              {
+                cache:'no-store',
+                credentials:'same-origin'
+              }
+            );
+
+          if (!respuesta.ok) {
+            return '';
+          }
+
+          const contenido =
+            await respuesta.text();
+
+          return normalizarExec(
+            contenido
+          );
+
+        } catch (ignore) {
+          return '';
+        }
+      }
+
+
+      function descubrirDesdePaginaRaiz() {
+        return new Promise(
+          function(resolve) {
+            const auxiliar =
+              document.createElement(
+                'iframe'
+              );
+
+            auxiliar.style.position =
+              'fixed';
+
+            auxiliar.style.left =
+              '-20000px';
+
+            auxiliar.style.top =
+              '0';
+
+            auxiliar.style.width =
+              '10px';
+
+            auxiliar.style.height =
+              '10px';
+
+            auxiliar.style.opacity =
+              '0';
+
+            auxiliar.setAttribute(
+              'aria-hidden',
+              'true'
+            );
+
+            let terminado =
+              false;
+
+            function finalizar(url) {
+              if (terminado) {
+                return;
+              }
+
+              terminado =
+                true;
+
+              try {
+                auxiliar.remove();
+              } catch (ignore) {}
+
+              resolve(
+                normalizarExec(
+                  url
+                )
+              );
+            }
+
+            auxiliar.addEventListener(
+              'load',
+              function() {
+                let intentos =
+                  0;
+
+                const revisar =
+                  function() {
+                    intentos++;
+
+                    try {
+                      const doc =
+                        auxiliar.contentDocument;
+
+                      if (doc) {
+                        const inner =
+                          doc.querySelector(
+                            'iframe[src*="script.google.com/macros/s/"]'
+                          );
+
+                        if (
+                          inner &&
+                          inner.getAttribute(
+                            'src'
+                          )
+                        ) {
+                          finalizar(
+                            inner.getAttribute(
+                              'src'
+                            )
+                          );
+                          return;
+                        }
+
+                        const scripts =
+                          Array.from(
+                            doc.scripts || []
+                          );
+
+                        for (
+                          let i = 0;
+                          i < scripts.length;
+                          i++
+                        ) {
+                          const encontrado =
+                            normalizarExec(
+                              scripts[i].textContent ||
+                              scripts[i].src ||
+                              ''
+                            );
+
+                          if (encontrado) {
+                            finalizar(
+                              encontrado
+                            );
+                            return;
+                          }
+                        }
+                      }
+
+                    } catch (ignore) {}
+
+                    if (intentos >= 20) {
+                      finalizar('');
+                      return;
+                    }
+
+                    window.setTimeout(
+                      revisar,
+                      150
+                    );
+                  };
+
+                revisar();
+              },
+              {once:true}
+            );
+
+            auxiliar.src =
+              './?sioeFirmaBridge=1';
+
+            document.body.appendChild(
+              auxiliar
+            );
+
+            window.setTimeout(
+              function() {
+                finalizar('');
+              },
+              5000
+            );
+          }
+        );
+      }
+
+
+      async function descubrirExec() {
+        /*
+         * 1. Busca directamente en el index principal.
+         * 2. Busca en config.js si el proyecto lo usa.
+         * 3. Como respaldo abre la raíz oculta y detecta el iframe
+         *    que ya utiliza sioe.edupsic.com.
+         */
+        let exec =
+          await descubrirDesdeArchivo(
+            './index.html'
+          );
+
+        if (exec) {
+          return exec;
+        }
+
+        exec =
+          await descubrirDesdeArchivo(
+            './config.js'
+          );
+
+        if (exec) {
+          return exec;
+        }
+
+        return await descubrirDesdePaginaRaiz();
+      }
+
+
+      descubrirExec()
+        .then(
+          function(execUrl) {
+            if (!execUrl) {
+              throw new Error(
+                'No se pudo localizar la aplicación de SIOE.'
+              );
+            }
+
+            const destino =
+              execUrl +
+              '?firmaCal=' +
+              encodeURIComponent(
+                token
+              );
+
+            frame.addEventListener(
+              'load',
+              function() {
+                estado.style.display =
+                  'none';
+
+                frame.style.display =
+                  'block';
+              },
+              {once:true}
+            );
+
+            frame.src =
+              destino;
+          }
+        )
+        .catch(
+          function(error) {
+            titulo.textContent =
+              'No fue posible abrir la firma';
+
+            texto.textContent =
+              error &&
+              error.message
+                ? error.message
+                : 'No se pudo conectar con SIOE.';
+
+            texto.className =
+              'error';
+          }
+        );
+
+    })();
+  </script>
+
+</body>
+</html>
